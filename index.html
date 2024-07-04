@@ -138,11 +138,11 @@
         sendStatistic(msgId, "display");
       }
 
-      const socket = io("https://sinot.io/webapi");
-//       const socket = io("https://sinot.io", {
-//     path: "/webapi/socket.io",
-//     transports: ['websocket'], // Примусове використання WebSocket
-// });
+      // const socket = io("https://sinot.io/webapi");
+      const socket = io("https://sinot.io", {
+    path: "/webapi/socket.io",
+    transports: ['websocket'], // Примусове використання WebSocket
+});
 
       socket.on("connect", () => {
         socket.emit("subscribeToNotifications", d_id);
