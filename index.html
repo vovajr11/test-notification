@@ -9,7 +9,178 @@
   <body>
     <h1>Test site 1</h1>
     <h2>User: 666ffe8e80197efc38f03ec6</h2>
-<script defer data-domain="test" src="https://sinot.io/notification-script.js/?id=66867cf1defe7eddf875877d"></script>
+<!-- <script defer data-domain="test" src="https://sinot.io/notification-script.js/?id=66867cf1defe7eddf875877d"></script> -->
+
+    <script>
+      (function () {
+  const mainURL = "https://sinot.io/webapi";
+
+  async function sendStatistic(notificationId, action) {
+    try {
+      await fetch(`${mainURL}/statistic/action`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          notificationId,
+          action,
+        }),
+      });
+    } catch (error) {
+      console.error("Failed to send statistic:", error);
+    }
+  }
+
+  const scriptUrl = new URL(document.currentScript.src);
+  const d_id = scriptUrl.searchParams.get("id");
+
+  if (!d_id) {
+    console.error("User ID is missing");
+    return;
+  }
+
+  const toastifyCss = document.createElement("link");
+  toastifyCss.rel = "stylesheet";
+  toastifyCss.type = "text/css";
+  toastifyCss.href =
+    "https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css";
+  document.head.appendChild(toastifyCss);
+
+  const socketIoJs = document.createElement("script");
+  socketIoJs.src = "https://cdn.socket.io/4.0.0/socket.io.min.js";
+  socketIoJs.onload = function () {
+    const style = document.createElement("style");
+    style.type = "text/css";
+    style.innerHTML = `
+      .toast-close {
+        color: #656D76;
+      }
+      `;
+    document.head.appendChild(style);
+
+    const toastifyJs = document.createElement("script");
+    toastifyJs.type = "text/javascript";
+    toastifyJs.src = "https://cdn.jsdelivr.net/npm/toastify-js";
+    toastifyJs.onload = function () {
+      function shouldShowNotification(notificationId) {
+        const storedDate = localStorage.getItem(
+          `notification_${notificationId}`
+        );
+        const currentDate = new Date();
+        currentDate.setDate(currentDate.getDate());
+
+        if (storedDate) {
+          const lastShownDate = new Date(storedDate);
+          const isSameDay =
+            currentDate.getFullYear() === lastShownDate.getFullYear() &&
+            currentDate.getMonth() === lastShownDate.getMonth() &&
+            currentDate.getDate() === lastShownDate.getDate();
+
+          if (isSameDay) {
+            return false;
+          } else {
+            localStorage.removeItem(`notification_${notificationId}`);
+          }
+        }
+
+        localStorage.setItem(
+          `notification_${notificationId}`,
+          currentDate.toISOString()
+        );
+
+        return true;
+      }
+
+      function showNotification(notification) {
+        const msgId = notification._id;
+
+        const customNode = document.createElement("div");
+        customNode.className = "custom-toast";
+        customNode.innerHTML = `
+            <div style="display: flex; align-items: center; font-family: Inter, sans-serif;">
+                <img src="${mainURL}/images/${notification.img}" style="width: 50px; height: 50px; margin-right: 16px;" alt="Notification Image">
+                <div style="flex: 1; line-height: 20px;">
+                    <span style="font-size: 14px; font-weight: 600; color: #161619; text-decoration: underline;">${notification.title}</span>
+                    <p style="margin: 4px 0 0; font-size: 12px; font-weight: 400; color: #656D76;">${notification.text}</p>
+                </div>
+            </div>
+        `;
+
+        const t = Toastify({
+          node: customNode,
+          duration: 3000,
+          close: true,
+          gravity: "top",
+          position: "right",
+          backgroundColor: "white",
+          stopOnFocus: true,
+          onClick: function () {
+            if (notification.href) {
+              window.open(notification.href, "_blank");
+              sendStatistic(msgId, "open");
+            }
+            t.hideToast();
+            sendStatistic(msgId, "click");
+          },
+          style: {
+            display: "flex",
+            alignItems: "start",
+            padding: "10px",
+            borderRadius: "10px",
+            gap: "5px",
+            maxWidth: "370px",
+          },
+        });
+        t.showToast();
+        t.toastElement.querySelector(".toast-close").textContent = "✕";
+        sendStatistic(msgId, "display");
+      }
+
+      const socket = io("webapi");
+
+      socket.on("connect", () => {
+        socket.emit("subscribeToNotifications", d_id);
+      });
+
+      socket.on("initialNotifications", (notifications) => {
+        console.log(notifications, "init notifications");
+        notifications.forEach((notification) => {
+          if (shouldShowNotification(notification._id)) {
+            showNotification(notification);
+          }
+        });
+      });
+
+      socket.on("newNotification", (notification) => {
+        console.log(notification._id, "new notifications");
+        if (shouldShowNotification(notification._id)) {
+          showNotification(notification);
+        }
+      });
+
+      // socket.on('disconnect', () => {
+      //   console.log('Disconnected from WebSocket server');
+      // });
+
+      // socket.on('connect_error', (error) => {
+      //   console.error('Connection error:', error);
+      // });
+    };
+    document.head.appendChild(toastifyJs);
+  };
+  document.head.appendChild(socketIoJs);
+
+  const fetchFont = async () => {
+    const link = document.createElement("link");
+    link.href =
+      "https://fonts.googleapis.com/css2?family=Inter:wght@400..600&display=swap";
+    link.rel = "stylesheet";
+    document.head.appendChild(link);
+  };
+})();
+
+    </script>
 
   </body>
 </html>
