@@ -139,8 +139,8 @@
       }
 
       const socket = io("https://sinot.io", {
-    path: "/webapi",
-    transports: ['websocket'],
+    path: "/webapi/socket.io",
+    transports: ['websocket'], // Примусове використання WebSocket
 });
 
       socket.on("connect", () => {
