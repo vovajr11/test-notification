@@ -138,7 +138,10 @@
         sendStatistic(msgId, "display");
       }
 
-      const socket = io("https://sinot.io/webapi");
+      const socket = io("https://sinot.io", {
+    path: "/webapi",
+    transports: ['websocket'],
+});
 
       socket.on("connect", () => {
         socket.emit("subscribeToNotifications", d_id);
