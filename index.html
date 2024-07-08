@@ -139,7 +139,12 @@
         sendStatistic(msgId, "display");
       }
 
-      const socket = io("https://popup.sinot.io/webapi");
+
+       const socket = io("https://popup.sinot.io/webapi", {
+        query: {
+          id: d_id,
+        },
+      });
 //       const socket = io("https://sinot.io", {
 //     path: "/webapi/socket.io",
 //     transports: ['websocket'], // Примусове використання WebSocket
